@@ -1,4 +1,4 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
-
+# /usr/bin/viet 203.190.171.28
 exit 0
