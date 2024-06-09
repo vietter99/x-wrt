@@ -7,3 +7,8 @@ src-git-full x https://github.com/x-wrt/com.x-wrt.git
 #src-git-full targets https://github.com/openwrt/targets.git
 #src-git-full oldpackages http://git.openwrt.org/packages.git
 #src-link custom /usr/src/openwrt/custom-feed
+echo "src-git usb3disable https://github.com/vietter99/luci-app-usb3disable.git" >> "feeds.conf.default"
+echo "src-git vietterwrt https://github.com/vietter99/vietterwrt.git" >> "feeds.conf.default"
+echo "src-git modem5G https://github.com/vietter99/5G-Modem-Support.git" >> "feeds.conf.default"
+echo "src-git modemfeed https://github.com/vietter99/modemfeed.git" >> "feeds.conf.default"
+echo "src-git helloworld https://github.com/vietter99/helloworld.git" >> "feeds.conf.default"

@@ -1,0 +1,104 @@
+#!/bin/sh
+# Đồng bộ hóa ngày giờ
+# Hỗ trợ GMT+7
+# Copyright By Vietter
+dtdir="/root/date"
+initd="/etc/init.d"
+logp="/root/logp"
+jamup2="/root/jam2_up.sh"
+jamup="/root/jamup.sh"
+nmfl="$(basename "$0")"
+scver="4.0 Copyright By Vietter"
+
+function ngecurl() {
+    curl -si "$cv_type" | grep Date > "$dtdir"
+    echo -e "${nmfl}: Đã chọn $cv_type làm máy chủ."
+    logger "${nmfl}: Đã chọn $cv_type làm máy chủ."
+}
+
+function sandal() {
+    hari=$(cat "$dtdir" | cut -b 12-13)
+    bulan=$(cat "$dtdir" | cut -b 15-17)
+    tahun=$(cat "$dtdir" | cut -b 19-22)
+    jam=$(cat "$dtdir" | cut -b 24-25)
+    menit=$(cat "$dtdir" | cut -b 26-31)
+
+    case $bulan in
+        "Jan") bulan="01";;
+        "Feb") bulan="02";;
+        "Mar") bulan="03";;
+        "Apr") bulan="04";;
+        "May") bulan="05";;
+        "Jun") bulan="06";;
+        "Jul") bulan="07";;
+        "Aug") bulan="08";;
+        "Sep") bulan="09";;
+        "Oct") bulan="10";;
+        "Nov") bulan="11";;
+        "Dec") bulan="12";;
+        *) return;;
+    esac
+
+    date -u -s "$tahun.$bulan.$hari-$jam$menit" > /dev/null 2>&1
+    echo -e "${nmfl}: Đặt ngày giờ thành [ $(date) ]"
+    logger "${nmfl}: Đặt ngày giờ thành [ $(date) ]"
+}
+
+function ngepink() {
+    if [[ $(curl -si ${cv_type} | grep -c 'Date:') == "1" ]]; then
+        echo -e "${nmfl}: Ping ${cv_type} OK, tiếp tục tác vụ..."
+        logger "${nmfl}: Ping ${cv_type} OK, tiếp tục tác vụ..."
+    else
+            echo -e "${nmfl}: Ping ${cv_type} không khả dụng, đang ping lại..."
+            logger "${nmfl}: Ping ${cv_type} không khả dụng, đang ping lại..."
+            sleep 3
+            ngepink
+    fi
+}
+
+if [[ "$1" == "update" ]]; then
+    echo -e "${nmfl}: Update tệp lệnh..."
+    echo -e "${nmfl}: Đang tải tệp lệnh..."
+    wget --no-check-certificate "https://raw.githubusercontent.com/vietter99/timewrt/master/viet" -O "$jamup"
+    chmod +x "$jamup"
+    sed -i 's/\r$//' "$jamup"
+    cat << "EOF" > "$jamup2"
+
+#!/bin/bash
+# Đồng bộ ngày giờ bằng tên miền/URL
+jamsh='/usr/bin/viet'
+jamup='/root/jamup.sh'
+[[ -e "$jamup" ]] && [[ -f "$jamsh" ]] && rm -f "$jamsh" && mv "$jamup" "$jamsh"
+[[ -e "$jamup" ]] && [[ ! -f "$jamsh" ]] && mv "$jamup" "$jamsh"
+echo -e 'viet: update thành công.'
+chmod +x "$jamsh"
+EOF
+    sed -i 's/\r$//' "$jamup2"
+    chmod +x "$jamup2"
+
+elif [[ "$1" =~ "http://" ]]; then
+    cv_type="$1"
+elif [[ "$1" =~ "https://" ]]; then
+    cv_type=$(echo -e "$1" | sed 's|https|http|g')
+elif [[ "$1" =~ [.] ]]; then
+    cv_type=http://"$1"
+fi
+
+if [[ ! -z "$cv_type" ]]; then
+    # Script Version
+    echo -e "${nmfl}: Version v${scver}"
+    logger "${nmfl}: Version v${scver}"
+
+    # Runner
+    if [[ "$2" == "cron" ]]; then
+        ngepink
+    else
+        ngepink
+        ngecurl
+        sandal
+    fi
+
+    # Cleaning files
+    [[ -f "$log" ]] && rm -f "$log" && echo -e "${nmfl}: Đã dọn thư mục log!" && logger "${nmfl}: Đã dọn thư mục log!"
+    [[ -f "$dtdir" ]] && rm -f "$dtdir" && echo -e "${nmfl}: Đã dọn thư mục tmp dir!" && logger "${nmfl}: Đã dọn thư mục tmp dir!"
+fi
